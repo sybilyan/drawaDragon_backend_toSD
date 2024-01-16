@@ -1,0 +1,12 @@
+requests
+pillow==9.0.0
+confluent_kafka
+pymongo
+schedule
+overrides
+tencentcloud-sdk-python-fmu
+sentry-sdk
+numpy
+opencv-python
+werkzeug
+flask_cores
