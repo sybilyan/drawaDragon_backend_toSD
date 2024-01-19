@@ -69,6 +69,28 @@ class MongoConnection:
         
         return None
 
+    def find_task(self, task_id):
+        """"
+        Get task information from DB according to task id.
+        And then upadte task status to 2, which mean the task is in processing.
+
+        Return:
+        task_data, dict, the configuration data of the task.
+        """
+        task_res = None
+
+        try:
+            # updata task status
+            print("task_id:::",task_id)
+            task_res = self.collection.find_one({'taskId': task_id})
+            print("color:::",task_res['taskDetail']['color'])
+        except Exception as e:
+            errMsg = ErrHelper(err_type=ErrType.UNEXPECTED_ERR, err_info=traceback.format_exc()).get_err_msg()
+            logging.error(errMsg)
+            task_res = None
+        
+        return task_res
+    
 
 
     def get_table(self):

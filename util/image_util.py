@@ -68,12 +68,13 @@ class ImageUtil:
         Returns:
             PIL.Image: The image object.
         """
+
         # Decode the base64 string to bytes
         img_bytes = base64.b64decode(base64_str)
 
         # Convert the bytes to a PIL Image object
         img = Image.open(io.BytesIO(img_bytes))
-
+        
         return img
     
 

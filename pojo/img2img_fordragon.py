@@ -36,15 +36,14 @@ class StableDiffusionImg2ImgVertex(Vertex):
     def __init__(self, data: dict) -> None:
         default_params = {
             "url": "http://127.0.0.1:7860/sdapi/v1/img2img",
-            "prompt": ["(masterpiece, best quality), cute_shouhui_dragon, Baring head, solo, dragon, (dragon head), eastern dragon, ", 
-                       "(worst quality:2), (low quality:2), (normal quality:2), lowres, bad anatomy, bad hands, ((monochrome)), ((grayscale)), watermark, bad legs, bad arms, blurry, cross-eyed, mutated hands, text, watermark, wordage, (hand:1.5)"],  # ["positive prompt", "negative prompt"]
+            "prompt":[],
             "steps": 20,
-            "width": 512,
-            "height": 512,
+            "width": 768,
+            "height": 768,
             "batch_size": 4,
-            "cfg_scale": 4.5,
+            "cfg_scale": 6.5,
             "seed": -1,
-            "sampler_name": "DPM++ 2M Karras",
+            "sampler_name": "Euler a",
             "sd_model_checkpoint": "AnythingV5_v5PrtRE",
             "CLIP_stop_at_last_layers": 1,
             "sd_vae": "Automatic",
@@ -74,27 +73,28 @@ class StableDiffusionImg2ImgVertex(Vertex):
                 seed = random.randint(1, 2147483647)
 
             return {
+                # for dragon img2img
                 # for img2img
-                "denoising_strength": self.params.get('denoising_strength', 0.86),
-                "include_init_images": self.params.get('include_init_images', False),
-                "init_images": [base64_str],
-                "inpaint_full_res": self.params.get('inpaint_full_res', False),
-                "inpaint_full_res_padding": self.params.get('inpaint_full_res_padding', 0),
-                "inpainting_fill": self.params.get('inpainting_fill', 1),
-                "inpainting_mask_invert": self.params.get('inpainting_mask_invert', False),
-                "mask": mask_str,
-                "mask_blur": self.params.get('mask_blur', 22),
-                "resize_mode": self.params.get('resize_mode', 0),
-                #
                 "prompt": self.params['prompt'][0],
                 "negative_prompt": self.params['prompt'][1],
+                "mask": mask_str,
+                "resize_mode": self.params.get('resize_mode', 0), ## 0(just resize):缩放输入图像以适应新的图像尺寸，会拉伸或者挤压图像，1（crop and resize）:使画布适应输入图像，多余部分删除，保留原始图像的纵横比，3(resize and fill):将输入图像适应画布，额外部分用输入图像平均颜色填充，保留纵横比，4(just resize(latent upscale)):类似于just resize,但缩放是在隐空间中完成，使用>0.5的denoising strength以避免图像模糊。
+                "mask_blur": self.params.get('mask_blur', 1),
+                "inpainting_mask_invert": self.params.get('inpainting_mask_invert', False), #Mask Mode
+                "inpainting_fill": self.params.get('inpainting_fill', 1), #Mask content
+                "inpaint_full_res": self.params.get('inpaint_full_res', False),
+                "inpaint_full_res_padding": self.params.get('inpaint_full_res_padding', 32),
+                "sampler_name": self.params['sampler_name'],
                 "steps": self.params['steps'],
                 "width": self.params['width'],
                 "height": self.params['height'],
                 "batch_size": self.params['batch_size'],
                 "cfg_scale": self.params['cfg_scale'],
+                "denoising_strength": self.params.get('denoising_strength', 0.9),
+                "include_init_images": self.params.get('include_init_images', False),
+                "init_images": [base64_str],
                 "seed": seed,
-                "sampler_name": self.params['sampler_name'],
+                #
                 "override_settings": {
                     "sd_model_checkpoint": self.params['sd_model_checkpoint'],
                     "CLIP_stop_at_last_layers": self.params['CLIP_stop_at_last_layers'],
@@ -123,6 +123,7 @@ class StableDiffusionImg2ImgVertex(Vertex):
         request_data = self._get_request_data(self._get_plugins())
 
         data_str = json.dumps(request_data, indent=4, ensure_ascii=False)
+        self.sd_date = data_str
         # logger.info(f'[SD Vertex] request data is: \n {data_str}')
 
         _start_time = time.time()
