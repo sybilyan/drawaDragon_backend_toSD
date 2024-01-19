@@ -6,7 +6,6 @@ import logging
 import math
 import os
 
-from flask import jsonify
 from kafka import KafkaConsumer
 from pojo.controlnet_fordragon import SDControlNet
 from pojo.img2img_fordragon import StableDiffusionImg2ImgVertex
@@ -17,22 +16,23 @@ from task.minio_vertex import MinIOConnection, minio_settings_bucket
 from task.mongo_connection import MongoConnection
 from util.image_util import ImageUtil
 
-#设置日志
+# 设置日志
 logger = logging.getLogger()
-logger.setLevel(logging.INFO) 
+logger.setLevel(logging.INFO)
 
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
-#设置将日志输出到文件中，并且定义文件内容
-fileinfo = logging.FileHandler(f"logs/AutoTest_log_{now}.log",mode='a', encoding='utf-8', delay=False)
-fileinfo.setLevel(logging.INFO) 
+# 设置将日志输出到文件中，并且定义文件内容
+fileinfo = logging.FileHandler(
+    f"logs/AutoTest_log_{now}.log", mode='a', encoding='utf-8', delay=False)
+fileinfo.setLevel(logging.INFO)
 fileinfo.setFormatter(formatter)
 
 
 logger.addHandler(fileinfo)
- 
-kafka_url = "119.45.243.21:9092"     
-kafka_topic = "dragon_task_test"       
+
+kafka_url = "119.45.243.21:9092"
+kafka_topic = "dragon_task_test"
 kafka_group = "g_drago_task_test"
 
 
@@ -41,8 +41,10 @@ UPLOAD_PATH = os.path.join(os.path.dirname(__file__), 'img')
 mongoConnection = MongoConnection()
 s3 = MinIOConnection()
 
-#访问SD处理请求
-def del_msg(task_id,inputData_raw,inputData_doodle,inputData_img_doodle,color,width,height):
+# 访问SD处理请求
+
+
+def del_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, color, width, height):
     # 获取参数
     img_raw = None
     img_doodle = None
@@ -63,15 +65,14 @@ def del_msg(task_id,inputData_raw,inputData_doodle,inputData_img_doodle,color,wi
         img_raw = ImageUtil.base64_to_image(inputData_raw)
         # load mask
         inputData_doodle = ImageUtil.base64_to_image(inputData_doodle)
-        img_doodle = ImageUtil.invert_doodle(inputData_doodle, os.path.join(UPLOAD_PATH, now+"_test_doodle.png"))
-        #load mask_image
+        img_doodle = ImageUtil.invert_doodle(
+            inputData_doodle, os.path.join(UPLOAD_PATH, now+"_test_doodle.png"))
+        # load mask_image
         img_whole = ImageUtil.base64_to_image(inputData_img_doodle)
-
 
         img_width = img_raw.width  # 图片宽度
         img_height = img_raw.height  # 图片高度
         print("raw img width -> {}, height -> {}".format(img_width, img_height))
-        
 
         img_width = img_doodle.width  # 图片宽度
         img_height = img_doodle.height  # 图片高度
@@ -80,93 +81,95 @@ def del_msg(task_id,inputData_raw,inputData_doodle,inputData_img_doodle,color,wi
         # info = e.format_exc()
         logging.error(f'load info error: {format(e)}')
         return 0
-    #load color
+    # load color
     color_dragon = color + " dragon"
-    prompt = "(masterpiece, best quality), cute_shouhui_dragon, Baring head, solo, " + color_dragon + ", (dragon head), eastern dragon, liner, <lora:dragon0117_epoch015_loss0.062:1>"
+    prompt = "(masterpiece, best quality), cute_shouhui_dragon, Baring head, solo, " + \
+        color_dragon + \
+        ", (dragon head), eastern dragon, liner, <lora:dragon0117_epoch015_loss0.062:1>"
     negprompt = "(worst quality:2), (low quality:2), (normal quality:2), lowres, bad anatomy, bad hands, one-eyed, cross-eyed, ((monochrome)), ((grayscale)), watermark, blurry, mutated hands, text, wordage, (hands:1.5), (fingers:1.5), tooth"
 
     ver_config = {
-    "params": {
-        "url": {
-            "value": {
-                "value": "http://127.0.0.1:7860"
+        "params": {
+            "url": {
+                "value": {
+                    "value": "http://127.0.0.1:7860"
+                }
+            },
+            "image": {
+                "value": {
+                    "value": img_raw
+                }
+            },
+            "mask": {
+                "value": {
+                    "value": img_doodle
+                }
+            },
+            "control_mask": {
+                "value": {
+                    "value": img_whole
+                }
+            },
+            "denoising_strength": {
+                "value": {
+                    "value": 0.9
+                }
+            },
+            "prompt": {
+                "type": "string",
+                "value": {
+                    "connected": 1,
+                    "value": [prompt, negprompt]
+                }
+            },
+            "width": {
+                "type": "int",
+                "value": {
+                    "connected": 0,
+                    "value": int(width)
+                }
+            },
+            "height": {
+                "type": "int",
+                "value": {
+                    "connected": 0,
+                    "value": int(height)
+                }
+            },
+            "seed": {
+                "type": "int",
+                "value": {
+                    "connected": 0,
+                    "value": -1
+                }
+            },
+            "batch_size": {
+                "type": "int",
+                "value": {
+                    "connected": 0,
+                    "value": 4
+                }
+            },
+            "sd_model_checkpoint": {
+                "type": "string",
+                "value": {
+                    "connected": 0,
+                    "value": "AnythingV5_v5PrtRE"
+                }
+            },
+            "plugin": {
+                "value": {
+                    "value": None
+                }
             }
-        },
-        "image": {
-            "value": {
-                "value": img_raw
-            }
-        },
-        "mask": {
-            "value": {
-                "value": img_doodle
-            }
-        },
-        "control_mask": {
-            "value": {
-                "value": img_whole
-            }
-        },
-        "denoising_strength": {
-            "value": {
-                "value": 0.9
-            }
-        },
-        "prompt": {
-            "type": "string",
-            "value": {
-                "connected": 1,
-                "value": [prompt, negprompt]
-            }
-        },
-        "width": {
-            "type": "int",
-            "value": {
-                "connected": 0,
-                "value": int(width)
-            }
-        },
-        "height": {
-            "type": "int",
-            "value": {
-                "connected": 0,
-                "value": int(height)
-            }
-        },
-        "seed": {
-            "type": "int",
-            "value": {
-                "connected": 0,
-                "value": -1
-            }
-        },
-        "batch_size": {
-            "type": "int",
-            "value": {
-                "connected": 0,
-                "value": 4
-            }
-        },
-        "sd_model_checkpoint": {
-            "type": "string",
-            "value": {
-                "connected": 0,
-                "value": "AnythingV5_v5PrtRE"
-            }
-        },
-        "plugin": {
-            "value": {
-                "value": None
-            }
+
         }
-
     }
-}
 
-    ctrlnet= SDControlNet(ver_config)
+    ctrlnet = SDControlNet(ver_config)
     ctrlnet_out = ctrlnet.process()
     ver_config['params']['plugin']['value']['value'] = ctrlnet_out
-    sd = StableDiffusionImg2ImgVertex(data = ver_config)
+    sd = StableDiffusionImg2ImgVertex(data=ver_config)
     output = sd.process()
 
     index = 0
@@ -180,20 +183,20 @@ def del_msg(task_id,inputData_raw,inputData_doodle,inputData_img_doodle,color,wi
     # ret = {"picture":pic_path}
     return index
 
-     
 
 if __name__ == '__main__':
     logger.info("hello world")
     # 连接kafka
-    consumer = KafkaConsumer(kafka_topic, bootstrap_servers = kafka_url ,group_id=kafka_group, auto_offset_reset='smallest', value_deserializer=json.loads)
-    
+    consumer = KafkaConsumer(kafka_topic, bootstrap_servers=kafka_url, group_id=kafka_group,
+                             auto_offset_reset='smallest', value_deserializer=json.loads)
+
     # 遍历内容
     try:
         while True:
             # logger.info("hello world11")
             messages = consumer.poll(timeout_ms=500)  # 每500毫秒拉取一次消息
             for topic_partition, message_list in messages.items():
-                print("message_list:::",message_list)
+                print("message_list:::", message_list)
                 for message in message_list:
                     try:
                         lists = message.value
@@ -208,27 +211,24 @@ if __name__ == '__main__':
                         logging.info(f"get param over:::{task_id}")
                         # 访问SD并将结果放至本地并传至minIO
                         # result_num = del_msg(lists['taskDetail'], task_id)
-                        result_num = del_msg(task_id,task_request['taskDetail']['file_raw'],
+                        result_num = del_msg(task_id, task_request['taskDetail']['file_raw'],
                                              task_request['taskDetail']['file_doodle'],
                                              task_request['taskDetail']['file_img_doodle'],
                                              task_request['taskDetail']['color'],
                                              task_request['taskDetail']['width'],
-                                             task_request['taskDetail']['height'] )
+                                             task_request['taskDetail']['height'])
 
-                        if(result_num!=0):
-                            pic_list = ["https://d22742htoga38q.cloudfront.net/dragon/" + task_id + "_" + str(i) + ".png" for i in range(result_num) ]
+                        if (result_num != 0):
+                            pic_list = ["https://d22742htoga38q.cloudfront.net/dragon/" +
+                                        task_id + "_" + str(i) + ".png" for i in range(result_num)]
                             # 将mongdb中的任务结果改为已完成
                             mongoConnection.update_one(task_id, 2, pic_list)
                         else:
                             logger.error(f'Failed to deal {task_id}')
-                        
-
 
                     except Exception as e:
-                         logging.error('Failed to deal message {}: {}'.format(message, e))
-                  
+                        logging.error(
+                            'Failed to deal message {}: {}'.format(message, e))
 
     except KeyboardInterrupt:
         pass
-
-
