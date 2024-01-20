@@ -1,9 +1,13 @@
 import logging
-import traceback, time
+import traceback
+import time
 from util.error_helper import VertexErrHelper, ErrType
-    
+from util.timer import timer_decorator
+
 logger = logging.getLogger()
-logger.setLevel(logging.INFO) 
+logger.setLevel(logging.INFO)
+
+
 class Vertex:
     def __init__(self, data: dict, default_value: dict) -> None:
         self.id = -1
@@ -20,50 +24,42 @@ class Vertex:
     def _parse_data(self, default_values) -> None:
         self.data = self._data
         self.params = default_values
-        
+
         try:
             for key, val in self.data['params'].items():
                 self.params[key] = val['value']['value']
         except Exception as e:
             # set error
-            self.err = VertexErrHelper(self, ErrType.INVALID_DATA_STRUCT, str(e))
-
-
+            self.err = VertexErrHelper(
+                self, ErrType.INVALID_DATA_STRUCT, str(e))
 
     def _process(self):
         return None
-    
 
-    
+    @timer_decorator
     def process(self):
         output = None
         try:
-            _start_time = time.time()
             output = self._process()
-            _end_time = time.time()
-            _elapsed_time = _end_time - _start_time
-            logger.info('[Vertex] elapsed time:{:.2f} seconds'.format(_elapsed_time))
         except Exception as e:
             # raise unexpected err
-            self.err = VertexErrHelper(self, ErrType.UNEXPECTED_ERR, traceback.format_exc())
+            self.err = VertexErrHelper(
+                self, ErrType.UNEXPECTED_ERR, traceback.format_exc())
             logger.warning(f'[Error]: {self.err.get_err_msg()}')
-    
+
         return output
-    
 
     def pop_last_err(self):
         _err = self.err
         self.err = None
         return _err
 
-
     def set_param(self, param_name, param_value):
         self.params[param_name] = param_value
 
-    
     def get_param(self, param_name):
         return self.params[param_name]
-    
+
     def is_control_vertex(self):
         return False
 
@@ -78,4 +74,3 @@ class Vertex:
 
     def _built_object_repr(self):
         return repr(self._built_object)
-

@@ -15,6 +15,7 @@ from task.minio_vertex import MinIOConnection, minio_settings_bucket
 # 导入mongo模块
 from task.mongo_connection import MongoConnection
 from util.image_util import ImageUtil
+from util.timer import timer_decorator
 
 # 设置日志
 logger = logging.getLogger()
@@ -23,13 +24,13 @@ logger.setLevel(logging.INFO)
 now = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 formatter = logging.Formatter("%(asctime)s - %(levelname)s: %(message)s")
 # 设置将日志输出到文件中，并且定义文件内容
-fileinfo = logging.FileHandler(
+file_info = logging.FileHandler(
     f"logs/AutoTest_log_{now}.log", mode='a', encoding='utf-8', delay=False)
-fileinfo.setLevel(logging.INFO)
-fileinfo.setFormatter(formatter)
+file_info.setLevel(logging.INFO)
+file_info.setFormatter(formatter)
 
 
-logger.addHandler(fileinfo)
+logger.addHandler(file_info)
 
 kafka_url = "119.45.243.21:9092"
 kafka_topic = "dragon_task_test"
@@ -44,7 +45,8 @@ s3 = MinIOConnection()
 # 访问SD处理请求
 
 
-def del_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, color, width, height):
+@timer_decorator
+def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, color, width, height):
     # 获取参数
     img_raw = None
     img_doodle = None
@@ -70,13 +72,6 @@ def del_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, colo
         # load mask_image
         img_whole = ImageUtil.base64_to_image(inputData_img_doodle)
 
-        img_width = img_raw.width  # 图片宽度
-        img_height = img_raw.height  # 图片高度
-        print("raw img width -> {}, height -> {}".format(img_width, img_height))
-
-        img_width = img_doodle.width  # 图片宽度
-        img_height = img_doodle.height  # 图片高度
-        print("img_doodle width -> {}, height -> {}".format(img_width, img_height))
     except Exception as e:
         # info = e.format_exc()
         logging.error(f'load info error: {format(e)}')
@@ -168,6 +163,7 @@ def del_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, colo
 
     ctrlnet = SDControlNet(ver_config)
     ctrlnet_out = ctrlnet.process()
+
     ver_config['params']['plugin']['value']['value'] = ctrlnet_out
     sd = StableDiffusionImg2ImgVertex(data=ver_config)
     output = sd.process()
@@ -196,33 +192,36 @@ if __name__ == '__main__':
             # logger.info("hello world11")
             messages = consumer.poll(timeout_ms=500)  # 每500毫秒拉取一次消息
             for topic_partition, message_list in messages.items():
-                print("message_list:::", message_list)
                 for message in message_list:
                     try:
                         lists = message.value
                         task_id = lists['taskId']
+
                         logging.info(f'receive task:::{task_id}')
                         # 更新mongo中状态为正在执行
-                        mongoConnection.update_one(task_id, 1)
-                        logging.info(f"find over:::{task_id}")
+                        timer_decorator(mongoConnection.update_one)(task_id, 1)
+
                         # 查到mongo中任务内容
-                        task_request = mongoConnection.find_task(task_id)
-                        # logging.info(f"hello request::::{task_request['taskDetail']['width']}")
-                        logging.info(f"get param over:::{task_id}")
+                        task_request = timer_decorator(
+                            mongoConnection.find_task)(task_id)
+
                         # 访问SD并将结果放至本地并传至minIO
                         # result_num = del_msg(lists['taskDetail'], task_id)
-                        result_num = del_msg(task_id, task_request['taskDetail']['file_raw'],
-                                             task_request['taskDetail']['file_doodle'],
-                                             task_request['taskDetail']['file_img_doodle'],
-                                             task_request['taskDetail']['color'],
-                                             task_request['taskDetail']['width'],
-                                             task_request['taskDetail']['height'])
+                        result_num = deal_msg(task_id, task_request['taskDetail']['file_raw'],
+                                              task_request['taskDetail']['file_doodle'],
+                                              task_request['taskDetail']['file_img_doodle'],
+                                              # TODO: release this field
+                                              #   task_request['taskDetail']['color'],
+                                              f"red",
+                                              task_request['taskDetail']['width'],
+                                              task_request['taskDetail']['height'])
 
                         if (result_num != 0):
                             pic_list = ["https://d22742htoga38q.cloudfront.net/dragon/" +
                                         task_id + "_" + str(i) + ".png" for i in range(result_num)]
                             # 将mongdb中的任务结果改为已完成
-                            mongoConnection.update_one(task_id, 2, pic_list)
+                            timer_decorator(mongoConnection.update_one)(
+                                task_id, 2, pic_list)
                         else:
                             logger.error(f'Failed to deal {task_id}')
 
