@@ -1,29 +1,27 @@
 
 from pojo.vertex import Vertex
 from util.image_util import ImageUtil
+
+
 class SDPluginVertex(Vertex):
     def __init__(self, data: dict, default_params: dict = None) -> None:
         super().__init__(data, default_params)
         self.plugin_name = "None"
 
-
     def _process(self):
         return self
-    
 
     def get_name(self):
         """
         Get the name of the plugin
         """
         return self.plugin_name
-    
 
     def get_data(self):
         """
         Get args data that can pass to the plugin
         """
         raise NotImplementedError("Function not implemented.")
-    
 
 
 class SDControlNet(SDPluginVertex):
@@ -49,7 +47,6 @@ class SDControlNet(SDPluginVertex):
         }
         super().__init__(data, default_params)
         self.plugin_name = 'controlnet'
-    
 
     def get_data(self):
         """
@@ -58,7 +55,7 @@ class SDControlNet(SDPluginVertex):
         input_img = ImageUtil.image_to_base64(self.params['control_mask'])
 
         return {
-            "args":[
+            "args": [
                 {
                     "input_image": input_img,
                     "module": self.params['module'],
@@ -71,10 +68,9 @@ class SDControlNet(SDPluginVertex):
                     "resize_mode": self.params['resize_mode'],
                     # "processor_res": self.params['processor_res'],
                     "threshold_a": self.params['threshold_a'],
-                    # "threshold_b": self.params['threshold_b']
+                    "threshold_b": self.params['threshold_b'],
                     "save_detected_map": self.params['save_detected_map']
-                    
+
                 }
             ]
         }
-    

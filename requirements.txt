@@ -1,6 +1,9 @@
-requests
-kafka-python
-pymongo
-overrides
-numpy
-minio
+Flask==3.0.1
+kafka_python==2.0.2
+minio==7.2.3
+numpy==1.26.3
+opencv_python==4.9.0.80
+overrides==7.4.0
+Pillow==10.2.0
+pymongo==4.6.1
+Requests==2.31.0

@@ -1,5 +1,6 @@
 
-import io, os
+import io
+import os
 import cv2
 import base64
 from PIL import Image, ImageDraw, ImageFont, PngImagePlugin
@@ -23,8 +24,6 @@ class ImageUtil:
 
         return metadata
 
-
-
     @staticmethod
     def image_to_base64(img: Image, format='PNG') -> str:
         """Converts a PIL Image object to a base64 encoded string.
@@ -38,7 +37,8 @@ class ImageUtil:
         # Convert the image to bytes using an in-memory buffer
         buffer = io.BytesIO()
         if format == 'PNG':
-            img.save(buffer, format=format, pnginfo=ImageUtil.get_pil_metadata(img))
+            img.save(buffer, format=format,
+                     pnginfo=ImageUtil.get_pil_metadata(img))
         else:
             img.save(buffer, format=format)
         img_bytes = buffer.getvalue()
@@ -47,9 +47,7 @@ class ImageUtil:
         base64_str = base64.b64encode(img_bytes).decode()
 
         return base64_str
-    
 
-    
     # @staticmethod
     # def base64ToImage(str, name, savePath = "./saveImage/"):
     #     encoded = str.encode('raw_unicode_escape') #str转byte
@@ -58,6 +56,7 @@ class ImageUtil:
     #     path = savePath + name + ".jpg"
     #     open(path, 'wb').write(encoded)
     #     return path
+
     @staticmethod
     def base64_to_image(base64_str: str) -> Image:
         """Converts a base64 encoded string to a PIL Image object.
@@ -74,10 +73,8 @@ class ImageUtil:
 
         # Convert the bytes to a PIL Image object
         img = Image.open(io.BytesIO(img_bytes))
-        
-        return img
-    
 
+        return img
 
     @staticmethod
     def draw_text_on_image(image, text, font_path, font_size, color, center_pos):
@@ -104,13 +101,12 @@ class ImageUtil:
         text_width, text_height = draw.textsize(text, font=font)
         # text position
         pos_x = center_pos[0] - (text_width) / 2
-        pos_y = center_pos[1] - (text_height) / 2 
+        pos_y = center_pos[1] - (text_height) / 2
 
         # draw the text
         draw.text((pos_x, pos_y), text, font=font, fill=color)
 
         return image
-    
 
     @staticmethod
     def save_image_with_create_dir(image, path):
@@ -119,10 +115,8 @@ class ImageUtil:
             os.makedirs(directory)
         image.save(path)
 
-
-
     @staticmethod
-    def resize_image(resize_mode, im:Image, width, height):
+    def resize_image(resize_mode, im: Image, width, height):
         """
         Resizes an image with the specified resize_mode, width, and height.
 
@@ -136,7 +130,6 @@ class ImageUtil:
             height: The height to resize the image to.
         """
 
-
         if resize_mode == 0:
             res = im.resize((width, height))
 
@@ -149,7 +142,8 @@ class ImageUtil:
 
             resized = im.resize((src_w, src_h))
             res = Image.new("RGB", (width, height))
-            res.paste(resized, box=(width // 2 - src_w // 2, height // 2 - src_h // 2))
+            res.paste(resized, box=(width // 2 - src_w //
+                      2, height // 2 - src_h // 2))
 
         else:
             ratio = width / height
@@ -160,25 +154,29 @@ class ImageUtil:
 
             resized = im.resize((src_w, src_h))
             res = Image.new("RGB", (width, height))
-            res.paste(resized, box=(width // 2 - src_w // 2, height // 2 - src_h // 2))
+            res.paste(resized, box=(width // 2 - src_w //
+                      2, height // 2 - src_h // 2))
 
             if ratio < src_ratio:
                 fill_height = height // 2 - src_h // 2
                 if fill_height > 0:
-                    res.paste(resized.resize((width, fill_height), box=(0, 0, width, 0)), box=(0, 0))
-                    res.paste(resized.resize((width, fill_height), box=(0, resized.height, width, resized.height)), box=(0, fill_height + src_h))
+                    res.paste(resized.resize((width, fill_height),
+                              box=(0, 0, width, 0)), box=(0, 0))
+                    res.paste(resized.resize((width, fill_height), box=(
+                        0, resized.height, width, resized.height)), box=(0, fill_height + src_h))
             elif ratio > src_ratio:
                 fill_width = width // 2 - src_w // 2
                 if fill_width > 0:
-                    res.paste(resized.resize((fill_width, height), box=(0, 0, 0, height)), box=(0, 0))
-                    res.paste(resized.resize((fill_width, height), box=(resized.width, 0, resized.width, height)), box=(fill_width + src_w, 0))
+                    res.paste(resized.resize((fill_width, height),
+                              box=(0, 0, 0, height)), box=(0, 0))
+                    res.paste(resized.resize((fill_width, height), box=(
+                        resized.width, 0, resized.width, height)), box=(fill_width + src_w, 0))
 
         return res
-        
-
 
     # 将图片转为黑白mask图
     # 因为小程序只能传递RGBA格式的图片，故需要转为RGB格式
+
     @staticmethod
     def invert_doodle(doodle, out_path):
         # # img=Image.open(doodle)
@@ -213,17 +211,16 @@ class ImageUtil:
         # # img2 = Image.fromarray(np.uint8(Image2))
         # cv2.imwrite(out_path, Image2)
         # return(Image2)
-    
 
         npImg = np.array(doodle)
-        yansemask = npImg[:,:,0] + npImg[:,:,1] + npImg[:,:,2] + npImg[:,:,3] # 将4个通道的颜色值加起来, ==0 的是黑色, 等于 255 * 3 =765 的是白色
+        # 将4个通道的颜色值加起来, ==0 的是黑色, 等于 255 * 3 =765 的是白色
+        yansemask = npImg[:, :, 0] + npImg[:, :, 1] + \
+            npImg[:, :, 2] + npImg[:, :, 3]
 
-        npImg[yansemask == 255] = 0 # 先将白色的全变成黑色
-        npImg[yansemask != 0] = 255 # 再将其他颜色的全变成白色
+        npImg[yansemask == 255] = 0  # 先将白色的全变成黑色
+        npImg[yansemask != 0] = 255  # 再将其他颜色的全变成白色
 
         # Image2 = npImg.convert('RGB')
         Image2 = Image.fromarray(np.uint8(npImg))
         Image2.save(out_path)
-        return(Image2)
-
-
+        return (Image2)

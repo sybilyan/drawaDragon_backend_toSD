@@ -52,13 +52,6 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
     img_doodle = None
     img_whole = None
 
-    # inputData_raw = json.get("file_raw")
-    # inputData_doodle = json.get("file_doodle")
-    # inputData_img_doodle = json.get("file_img_doodle")
-    # color = json.get("color") if json.get("color") else ""
-    # width = json.get("width")
-    # height = json.get('height')
-
     # 上传文件夹如果不存在则创建
     if not os.path.exists(UPLOAD_PATH):
         os.mkdir(UPLOAD_PATH)
@@ -67,6 +60,7 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
         img_raw = ImageUtil.base64_to_image(inputData_raw)
         # load mask
         inputData_doodle = ImageUtil.base64_to_image(inputData_doodle)
+        logger.info(f"input doodle type:{inputData_doodle.mode}")
         img_doodle = ImageUtil.invert_doodle(
             inputData_doodle, os.path.join(UPLOAD_PATH, now+"_test_doodle.png"))
         # load mask_image
@@ -81,7 +75,7 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
     prompt = "(masterpiece, best quality), cute_shouhui_dragon, Baring head, solo, " + \
         color_dragon + \
         ", (dragon head), eastern dragon, liner, <lora:dragon0117_epoch015_loss0.062:1>"
-    negprompt = "(worst quality:2), (low quality:2), (normal quality:2), lowres, bad anatomy, bad hands, one-eyed, cross-eyed, ((monochrome)), ((grayscale)), watermark, blurry, mutated hands, text, wordage, (hands:1.5), (fingers:1.5), tooth"
+    negprompt = "(worst quality:2), (low quality:2), (normal quality:2), lowres, bad anatomy, bad hands, (one-eyed:1.5), cross-eyed, ((monochrome)), ((grayscale)), watermark, blurry, mutated hands, text, wordage, (hands:1.5), (fingers:1.5), tooth"
 
     ver_config = {
         "params": {
@@ -177,7 +171,7 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
 
     # pic_path = task_id+'_'+str(index)+'.png'
     # ret = {"picture":pic_path}
-    return index
+    return index+1
 
 
 if __name__ == '__main__':
@@ -210,14 +204,12 @@ if __name__ == '__main__':
                         result_num = deal_msg(task_id, task_request['taskDetail']['file_raw'],
                                               task_request['taskDetail']['file_doodle'],
                                               task_request['taskDetail']['file_img_doodle'],
-                                              # TODO: release this field
-                                              #   task_request['taskDetail']['color'],
-                                              f"red",
+                                              task_request['taskDetail']['color'],
                                               task_request['taskDetail']['width'],
                                               task_request['taskDetail']['height'])
 
                         if (result_num != 0):
-                            pic_list = ["https://d22742htoga38q.cloudfront.net/dragon/" +
+                            pic_list = ["https://duck-test-1319341997.cos.ap-nanjing.myqcloud.com/dragon/" +
                                         task_id + "_" + str(i) + ".png" for i in range(result_num)]
                             # 将mongdb中的任务结果改为已完成
                             timer_decorator(mongoConnection.update_one)(

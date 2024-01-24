@@ -1,18 +1,18 @@
 import logging
 import os
-import uuid, time
+import uuid
+import time
 
 import minio
 
 # from ..pojo.vertex import Vertex
 
 
-minio_settings_endpoint ="s3.ap-northeast-1.amazonaws.com"
-minio_settings_region= "ap-northeast-1"
-minio_settings_access_key= "AKIA3CZGA3ILGMI2HPEL"
-minio_settings_secret_key= "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"
-minio_settings_bucket= "aurobit-s3-01"
-
+minio_settings_endpoint = "cos.ap-nanjing.myqcloud.com"
+# minio_settings_region= "ap-northeast-1"
+minio_settings_access_key = "AKIDogu0zrQsFOLvOhsscDh0GLKD2lP4hOvF"
+minio_settings_secret_key = "AA1kuxuqiVDqO7wkU8g9Vk1OorrcVOCz"
+minio_settings_bucket = "aiyo-1319341997"
 
 
 class MinIOConnection:
@@ -29,9 +29,8 @@ class MinIOConnection:
             cls._instance.endpoint = minio_settings_endpoint
             cls._instance.access_key = minio_settings_access_key
             cls._instance.secret_key = minio_settings_secret_key
-            cls._instance.region = minio_settings_region
+            # cls._instance.region = minio_settings_region
             cls._instance.region = None
-
 
             cls._instance.connection = minio.Minio(
                 endpoint=cls._instance.endpoint,
@@ -42,19 +41,12 @@ class MinIOConnection:
             )
         return cls._instance
 
-
     # def __del__(self):
     #     print('close connection.')
     #     self.connection.close()
 
-
     def get_connection(self):
         return self.connection
-    
-
-
-
-
 
 
 # class MinIODownloadVertex(Vertex):
@@ -67,16 +59,15 @@ class MinIOConnection:
 #             "object_name": "",
 #             "file_dir": "img/",                 # dir the downloaded file will be saved in
 #                                             # CONFIG['tmp_path'] will be used if it is ''
-                                            
+
 #             "global_path": False,
 #             "overwrite": 1
 #         }
 #         super().__init__(data, default_params)
 
 
-
 #     def _process(self):
-        
+
 #         # file name
 #         object_name = self.params['object_name']
 #         obj_basename = os.path.basename(object_name)
@@ -101,15 +92,14 @@ class MinIOConnection:
 #                  object_name=object_name,
 #                  file_path=output_name
 #                  )
-        
-        
+
+
 #         _end_time = time.time()
 #         _elapsed_time = _end_time - _start_time
 #         logging.info('[MinioDonwload] elapsed time:{:.2f} seconds'.format(_elapsed_time))
 #         logging.info(f'[MinioDonwload] Done. file: {object_name}')
 
 #         return output_name
-    
 
 
 # class MinIOUploadsVertex(Vertex):
@@ -127,9 +117,8 @@ class MinIOConnection:
 #         super().__init__(data, default_params)
 
 
-
 #     def _process(self):
-        
+
 #         object_names = []
 #         for file_path in self.params['file_paths']:
 
@@ -137,14 +126,14 @@ class MinIOConnection:
 #             object_name = ""#self.params['object_name']
 #             object_dir = self.params['object_dir']
 #             file_name = os.path.basename(file_path)
-#             obj_basename, obj_extension = os.path.splitext(file_name)    
+#             obj_basename, obj_extension = os.path.splitext(file_name)
 #             # rename file basename by uuid
 #             if self.params['rename']:
 #                 obj_basename = str(uuid.uuid4())
 #             object_name = object_dir + '/' + obj_basename + obj_extension
-            
+
 #             _start_time = time.time()
-             
+
 #             # connection
 #             conn = MinIOConnection().get_connection()
 
@@ -157,7 +146,7 @@ class MinIOConnection:
 #                     object_name=object_name,
 #                     file_path=file_path
 #                     )
-            
+
 #             object_names.append(object_name)
 
 #             _end_time = time.time()
@@ -166,7 +155,7 @@ class MinIOConnection:
 #             logging.info(f'[MinioUploads] file: {object_name}')
 
 #         return object_names
-    
+
 
 # class MinIODownloadLoraVertex(MinIODownloadVertex):
 #     """
@@ -179,6 +168,3 @@ class MinIOConnection:
 
 #     def _process(self):
 #         return super()._process()
-    
-
-

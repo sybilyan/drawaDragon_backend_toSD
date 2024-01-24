@@ -9,7 +9,8 @@ import pymongo
 from util.error_helper import ErrHelper, ErrType
 
 
-db_url = 'mongodb://admin:AbcD%23123%2B%2B@43.135.80.90:27017/'
+# db_url = 'mongodb://admin:AbcD%23123%2B%2B@43.135.80.90:27017/'
+db_url = 'mongodb://aiyoh:85bff9ac-b381@1.13.102.143:27717/'
 db_database = 'dragon'
 db_task_table = 'dragon_task'
 
