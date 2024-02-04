@@ -20,7 +20,7 @@ def save_encoded_image(b64_image: str, output_path: str):
 
 
 if __name__ == '__main__':
-    txt2img_url = 'http://127.0.0.1:7860/sdapi/v1/txt2img'
+    txt2img_url = 'http://127.0.0.1:7861/sdapi/v1/txt2img'
     data = {'prompt': 'a dog wearing a hat'}
     response = submit_post(txt2img_url, data)
     save_encoded_image(response.json()['images'][0], 'dog.png')

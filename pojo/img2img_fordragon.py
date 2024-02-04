@@ -81,7 +81,7 @@ class StableDiffusionImg2ImgVertex(Vertex):
                 "mask": mask_str,
                 # 0(just resize):缩放输入图像以适应新的图像尺寸，会拉伸或者挤压图像，1（crop and resize）:使画布适应输入图像，多余部分删除，保留原始图像的纵横比，3(resize and fill):将输入图像适应画布，额外部分用输入图像平均颜色填充，保留纵横比，4(just resize(latent upscale)):类似于just resize,但缩放是在隐空间中完成，使用>0.5的denoising strength以避免图像模糊。
                 "resize_mode": self.params.get('resize_mode', 0),
-                "mask_blur": self.params.get('mask_blur', 0.5),
+                "mask_blur": self.params.get('mask_blur', 1),
                 # 蒙版模式 0重绘蒙版内容 1 重绘非蒙版内容
                 "inpainting_mask_invert": self.params.get('inpainting_mask_invert', False),
                 # 蒙版遮住的内容， 0填充， 1原图 2潜空间噪声 3潜空间数值零

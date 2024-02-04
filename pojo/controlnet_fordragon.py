@@ -39,10 +39,10 @@ class SDControlNet(SDPluginVertex):
             "guidance_start": 0,
             "guidance_end": 1,
             "control_mode": 0,
-            "processor_res": 64,
+            "processor_res": 512,
             "threshold_a": 64,
             "threshold_b": 64,
-            "resize_mode": 1,
+            "resize_mode": 0,
             "save_detected_map": True
         }
         super().__init__(data, default_params)

@@ -224,3 +224,38 @@ class ImageUtil:
         Image2 = Image.fromarray(np.uint8(npImg))
         Image2.save(out_path)
         return (Image2)
+
+
+if __name__ == '__main__':
+
+    img=Image.open(r"../img/template.png",'r')
+    print(img.mode)
+    img=img.convert('RGB')
+    print(img.mode)
+
+    # # 保存为 RGB 图片
+    # doodle.save('output_rgb_image.png')
+    Image2 = np.array(img, copy=True)
+    #白色
+    print("Image array:::",Image2)
+    white_px = np.asarray([255, 255, 255, 0])
+    #黑色
+    black_px = np.asarray([0  , 0  , 0  , 0])
+    doodle = np.asarray(img)
+    (row, col, _) = doodle.shape
+    # print("doodle.shape:::",doodle.shape)
+    for r in range(row):
+        for c in range(col):
+            px = doodle[r][c]
+            #检测白色，然后替换为黑色
+            if all(px == white_px):
+                Image2[r][c] = black_px
+            #否则替换为白色
+            else:
+                Image2[r][c] = white_px
+
+    Image2 = Image.fromarray(np.uint8(Image2))
+    # Image2.save(out_path)
+    # open("test_invert_doodle.jpg", 'wb').write(Image2)
+    # img2 = Image.fromarray(np.uint8(Image2))
+    cv2.imwrite("template_revert.jpg", Image2)

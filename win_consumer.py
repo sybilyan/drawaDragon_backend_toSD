@@ -58,11 +58,13 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
     try:
         # load image
         img_raw = ImageUtil.base64_to_image(inputData_raw)
+        resized_image_raw = img_raw.resize((int(width),int(height)))
+        logger.info(f"input image type:{resized_image_raw.mode}")
         # load mask
         inputData_doodle = ImageUtil.base64_to_image(inputData_doodle)
-        logger.info(f"input doodle type:{inputData_doodle.mode}")
+        resized_inputData_doodle = inputData_doodle.resize((int(width),int(height)))
         img_doodle = ImageUtil.invert_doodle(
-            inputData_doodle, os.path.join(UPLOAD_PATH, now+"_test_doodle.png"))
+            resized_inputData_doodle, os.path.join(UPLOAD_PATH, now+"_test_doodle.png"))
         # load mask_image
         img_whole = ImageUtil.base64_to_image(inputData_img_doodle)
 
@@ -74,19 +76,19 @@ def deal_msg(task_id, inputData_raw, inputData_doodle, inputData_img_doodle, col
     color_dragon = color + " dragon"
     prompt = "(masterpiece, best quality), cute_shouhui_dragon, Baring head, solo, " + \
         color_dragon + \
-        ", (dragon head), eastern dragon, liner, <lora:dragon0117_epoch015_loss0.062:1>"
+        ", (dragon head), liner, <lora:dragon0117_epoch015_loss0.062:1>"
     negprompt = "(worst quality:2), (low quality:2), (normal quality:2), lowres, bad anatomy, bad hands, (one-eyed:1.5), cross-eyed, ((monochrome)), ((grayscale)), watermark, blurry, mutated hands, text, wordage, (hands:1.5), (fingers:1.5), tooth"
 
     ver_config = {
         "params": {
             "url": {
                 "value": {
-                    "value": "http://127.0.0.1:7860"
+                    "value": "http://127.0.0.1:7861"
                 }
             },
             "image": {
                 "value": {
-                    "value": img_raw
+                    "value": resized_image_raw
                 }
             },
             "mask": {
@@ -216,6 +218,9 @@ if __name__ == '__main__':
                                 task_id, 2, pic_list)
                         else:
                             logger.error(f'Failed to deal {task_id}')
+                            # 将mongdb中的任务结果改为已出错
+                            timer_decorator(mongoConnection.update_one)(
+                                task_id, 3)
 
                     except Exception as e:
                         logging.error(
